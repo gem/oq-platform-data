@@ -52,17 +52,6 @@ tiffs_update () {
         if [ $ret -ne 0 ]; then
             return $ret
         fi
-        # fname=my_layer_out${i}.xml
-        # curl -v -s -o "${GEM_TMPDIR}${fname}" -u $GEM_USER:$GEM_PASS  -H 'Content-type: application/xml' -d '<layer><defaultStyle>exposure_pop_urban</defaultStyle><enabled>true</enabled></layer>' -XPUT http://$GEM_HOST:$GEM_PORT/geoserver/rest/layers/ged:${GEM_COVERAGE}.xml
-
-        # if [ 1 -eq 1 ]; then
-        # fname=my_coverage_put.xml
-#<keywords><string>WCS</string><string>GeoTIFF</string><string>my_geotiff_light</string></keywords>
-        # curl -v -s -o "${OUTDIR}${dname}${fname}" -u $GEM_USER:$GEM_PASS -H 'Content-type: application/xml' \
-        # --data "<coverage><name>$GEM_COVERAGE</name><title>$GEM_COVERAGE</title><enabled>true</enabled><keywords><string></string></keywords><metadata><entry key=\"cachingEnabled\">false</entry></metadata><metadataLinks><metadataLink><type>text/xml</type><metadataType>TC211</metadataType><content>http://178.79.187.26/geonetwork/srv/en/csw?outputschema=http%3A%2F%2Fwww.isotc211.org%2F2005%2Fgmd&amp;service=CSW&amp;request=GetRecordById&amp;version=2.0.2&amp;elementsetname=full&amp;id=c800df22-f652-404d-b081-0b3de465a1f0</content></metadataLink></metadataLinks></coverage>" -XPUT "http://${GEM_HOST}:$GEM_PORT/geoserver/rest/workspaces/ged/coveragestores/$GEM_COVERSTORE/coverages/${GEM_COVERAGE}.xml"
-        # fi
-
-# 
     done
     fname=reset.xml
     curl -v -s -o "${GEM_TMPDIR}${fname}" -u $GEM_USER:$GEM_PASS  -XPOST http://$GEM_HOST:$GEM_PORT/geoserver/rest/reset
@@ -73,6 +62,31 @@ tiffs_update () {
 #
 #  MAIN
 #
+declare -a tiffcover
+declare -a tiffname
+declare -a tiffcstore
+
+tiffcover[0]="pop_vals_aus_rural"  ; tiffcstore[0]="aus_pop_rural"
+tiffcover[1]="pop_vals_aus_urban"  ; tiffcstore[1]="aus_pop_urban"
+tiffcover[2]="pop_vals_che_rural"  ; tiffcstore[2]=""
+tiffcover[3]="pop_vals_che_urban"  ; tiffcstore[3]=""
+tiffcover[4]="pop_vals_chn_rural"  ; tiffcstore[4]="chn_rural"
+tiffcover[5]="pop_vals_chn_urban"  ; tiffcstore[5]="chn_urban"
+tiffcover[6]="pop_vals_gbr_rural"  ; tiffcstore[6]="gbr_rural"
+tiffcover[7]="pop_vals_gbr_urban"  ; tiffcstore[7]="gbr_urban"
+tiffcover[8]="pop_vals_ind_rural"  ; tiffcstore[8]="ind_rural"
+tiffcover[9]="pop_vals_ind_urban"  ; tiffcstore[9]="ind_urban"
+tiffcover[10]="pop_vals_ita_rural" ; tiffcstore[10]="ita_pop_rural"
+tiffcover[11]="pop_vals_ita_urban" ; tiffcstore[11]="ita_pop_urban"
+tiffcover[12]="pop_vals_jpn_rural" ; tiffcstore[12]="jpn_pop_rural"
+tiffcover[13]="pop_vals_jpn_urban" ; tiffcstore[13]="jpn_pop_urban"
+tiffcover[14]="pop_vals_lux_rural" ; tiffcstore[14]="lux_pop_rural"
+tiffcover[15]="pop_vals_lux_urban" ; tiffcstore[15]="lux_pop_urban"
+tiffcover[16]="pop_vals_mac_rural" ; tiffcstore[16]="mac_pop_rural"
+tiffcover[17]="pop_vals_mac_urban" ; tiffcstore[17]="mac_pop_urban"
+tiffcover[18]="pop_vals_reu_rural" ; tiffcstore[18]="reu_rural"
+tiffcover[19]="pop_vals_reu_urban" ; tiffcstore[19]="reu_urban"
+
 if [ "$GEM_TMPBASE" = "" -o ! -d "$GEM_TMPBASE" ]; then
     if [ -d /var/tmp ]; then
         GEM_TMPBASE=/var/tmp/
@@ -90,38 +104,16 @@ fi
 echo "GEM_USER [$GEM_USER]  GEM_PASS [<secret>]  GEM_HOST [$GEM_HOST]  GEM_PORT [$GEM_PORT]  GEM_PROTO [$GEM_PROTO]"
 
 if [ "$1" = "prod" ]; then
-    declare -a tiffname
-    declare -a tiffcstore
-    declare -a tiffcover
-    
-    tiffname[0]="pop_vals_aus_rural.tif"  ; tiffcstore[0]="aus_pop_rural" 
-    tiffname[1]="pop_vals_aus_urban.tif"  ; tiffcstore[1]="aus_pop_urban"  
-    tiffname[2]="pop_vals_che_rural.tif"  ; tiffcstore[2]=""               
-    tiffname[3]="pop_vals_che_urban.tif"  ; tiffcstore[3]=""               
-    tiffname[4]="pop_vals_chn_rural.tif"  ; tiffcstore[4]="chn_rural"      
-    tiffname[5]="pop_vals_chn_urban.tif"  ; tiffcstore[5]="chn_urban"      
-    tiffname[6]="pop_vals_gbr_rural.tif"  ; tiffcstore[6]="gbr_rural"      
-    tiffname[7]="pop_vals_gbr_urban.tif"  ; tiffcstore[7]="gbr_urban"      
-    tiffname[8]="pop_vals_ind_rural.tif"  ; tiffcstore[8]="ind_rural"      
-    tiffname[9]="pop_vals_ind_urban.tif"  ; tiffcstore[9]="ind_urban"      
-    tiffname[10]="pop_vals_ita_rural.tif" ; tiffcstore[10]="ita_pop_rural" 
-    tiffname[11]="pop_vals_ita_urban.tif" ; tiffcstore[11]="ita_pop_urban" 
-    tiffname[12]="pop_vals_jpn_rural.tif" ; tiffcstore[12]="jpn_pop_rural" 
-    tiffname[13]="pop_vals_jpn_urban.tif" ; tiffcstore[13]="jpn_pop_urban" 
-    tiffname[14]="pop_vals_lux_rural.tif" ; tiffcstore[14]="lux_pop_rural" 
-    tiffname[15]="pop_vals_lux_urban.tif" ; tiffcstore[15]="lux_pop_urban" 
-    tiffname[16]="pop_vals_mac_rural.tif" ; tiffcstore[16]="mac_pop_rural" 
-    tiffname[17]="pop_vals_mac_urban.tif" ; tiffcstore[17]="mac_pop_urban" 
-    tiffname[18]="pop_vals_reu_rural.tif" ; tiffcstore[18]="reu_rural"     
-    tiffname[19]="pop_vals_reu_urban.tif" ; tiffcstore[19]="reu_urban"     
-
-    for i in $(seq 0  $(( ${#tiffname[*]} - 1)) ); do
-        tiffcover[$i]="$(echo "${tiffname[$i]}" | sed 's/\.tif$//g')"
-        # echo "$i) ${tiffname[$i]} | ${tiffcover[$i]}"
+    for i in $(seq 0  $(( ${#tiffcover[*]} - 1)) ); do
+        tiffname[$i]="${tiffcover[$i]}.tif"
+        # echo "$i) ${tiffcover[$i]} | ${tiffname[$i]}"
         cp "${ORIG_PATH}${tiffname[$i]}" "${DEST_PATH}"
     done
 elif [ "$1" = "dev" ]; then
-    echo "TODO"
+    for i in $(seq 0 2 18); do
+        tiffname[$i]="pop_vals_rural_dev.tif"
+        tiffname[$((i + 1))]="pop_vals_urban_dev.tif"
+    done
 fi
 
 tiffs_update tiffname[@] tiffcstore[@] tiffcover[@]
