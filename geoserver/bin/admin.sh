@@ -1,22 +1,54 @@
 #!/bin/bash
-set -x
+#set -x
 
 if [ -f $HOME/.oq-platform-data.conf ]; then
     source $HOME/.oq-platform-data.conf
 fi
 #
 #  GLOBAL VARS
-GEM_USER="${GEM_USER:=gem-user}"
-GEM_PASS="${GEM_PASS:=mypass}"
-GEM_HOST="${GEM_HOST:=localhost}"
-GEM_PORT="${GEM_PORT:=8080}"
-GEM_PROTO="http://"
-
+GEM_USER="${GEM_USER:-gem-user}"
+GEM_PASS="${GEM_PASS:-mypass}"
+GEM_HOST="${GEM_HOST:-localhost}"
+if [ "$GEM_PROTO" = "" ]; then
+    GEM_PROTO="$(grep '^SITEURL' /etc/geonode/local_settings.py  | sed "s/^SITEURL *= *[\"']\([a-z]*\):.*/\1/g")"
+fi
+GEM_PROTO="${GEM_PROTO:-http}"
+if [ "$GEM_PROTO" = "https" ]; then
+    GEM_PORT="${GEM_PORT:-443}"
+else
+    GEM_PORT="${GEM_PORT:-80}"
+fi
 ORIG_PATH="geoserver/data/Geotiffs/"
 DEST_PATH="/var/lib/tomcat6/webapps/geoserver/data/data/Geotiffs/"
 
 #
 #  FUNCTIONS
+
+usage() {
+    local ret
+    ret=$1
+    cat <<EOF
+USAGE:
+    sudo $0 <prod|dev>
+
+DESCRIPTION:
+    update geotiff data with the production version
+
+ENVIRONMENT:
+    GEM_USER - the name of the web-user that can perform rest api
+    GEM_PASS - the password of the web-user that can perform rest api
+    GEM_HOST - the public hostname where try to connect to the rest api
+    GEM_PROTO (optional) - the protocol (http/https) to be used where try to connect to the rest api
+    GEM_PORT (optional) - the port where try to connect to the rest api
+
+FILES:
+    \$HOME/.oq-platform-data.conf - if exists it is loaded at the beginning of the script
+        you can use it to set GEM_* variables descripted in the environment above.
+
+EOF
+    exit $ret
+}
+
 gem_exit() {
     local ret 
     ret="$1"
@@ -24,11 +56,26 @@ gem_exit() {
     if [ $ret -ne 0 ]; then
         echo "something go wrong, you can find logs into ${GEM_TMPDIR} directory. Good luck."
     else
-        echo fake rm -rf "${GEM_TMPDIR}"        
+        rm -rf "${GEM_TMPDIR}"
     fi
 
     exit $ret
 }
+
+curl_proc () {
+    local ret flog
+
+    ret=$1
+    flog="$2"
+
+    if [ $ret -ne 0 ]; then
+        return $ret
+    fi
+
+    grep -q '^< HTTP/1.1 2[0-9][0-9] ' "${flog}.log"
+    return $ret
+    }
+
 
 tiffs_update () {
     local ltiffname ltiffcstore ltiffcover
@@ -47,15 +94,18 @@ tiffs_update () {
 
         gem_filepath="${DEST_PATH}${ltiffname[$i]}"
         fname=my_geotiff_put${i}.xml
-        curl -v -s -o "${GEM_TMPDIR}${fname}"  -u $GEM_USER:$GEM_PASS --data-ascii "file:$gem_filepath" -XPUT "http://$GEM_HOST:$GEM_PORT/geoserver/rest/workspaces/ged/coveragestores/${ltiffcstore[$i]}/external.geotiff?coverageName=${ltiffcover[$i]}"
+
+        curl -L -v -s -o "${GEM_TMPDIR}${fname}" -u $GEM_USER:$GEM_PASS --data-ascii "file:$gem_filepath" -XPUT "${GEM_PROTO}://$GEM_HOST:$GEM_PORT/geoserver/rest/workspaces/ged/coveragestores/${ltiffcstore[$i]}/external.geotiff?coverageName=${ltiffcover[$i]}" 2>"${GEM_TMPDIR}${fname}.log"
+        curl_proc $? "${GEM_TMPDIR}${fname}"
         ret=$?
         if [ $ret -ne 0 ]; then
             return $ret
         fi
     done
     fname=reset.xml
-    curl -v -s -o "${GEM_TMPDIR}${fname}" -u $GEM_USER:$GEM_PASS  -XPOST http://$GEM_HOST:$GEM_PORT/geoserver/rest/reset
-        
+    curl -L -v -s -o "${GEM_TMPDIR}${fname}" -u $GEM_USER:$GEM_PASS  -XPOST "${GEM_PROTO}://$GEM_HOST:$GEM_PORT/geoserver/rest/reset" 2>"${GEM_TMPDIR}${fname}.log"
+    curl_proc $? "${GEM_TMPDIR}${fname}"
+    return $?
 }
 
 
@@ -94,7 +144,7 @@ if [ "$GEM_TMPBASE" = "" -o ! -d "$GEM_TMPBASE" ]; then
         GEM_TMPBASE=/tmp/
     fi
 fi
-GEM_TMPDIR="${GEM_TMPBASE}oq-platform-data.$$"
+GEM_TMPDIR="${GEM_TMPBASE}oq-platform-data.$$/"
 mkdir "$GEM_TMPDIR"
 if [ $? -ne 0 ]; then
     echo "Temporary directory '$GEM_TMPDIR' creation failed"
@@ -102,7 +152,6 @@ if [ $? -ne 0 ]; then
 fi
 
 echo "GEM_USER [$GEM_USER]  GEM_PASS [<secret>]  GEM_HOST [$GEM_HOST]  GEM_PORT [$GEM_PORT]  GEM_PROTO [$GEM_PROTO]"
-
 if [ "$1" = "prod" ]; then
     for i in $(seq 0  $(( ${#tiffcover[*]} - 1)) ); do
         tiffname[$i]="${tiffcover[$i]}.tif"
@@ -114,6 +163,8 @@ elif [ "$1" = "dev" ]; then
         tiffname[$i]="pop_vals_rural_dev.tif"
         tiffname[$((i + 1))]="pop_vals_urban_dev.tif"
     done
+else
+    usage 1
 fi
 
 tiffs_update tiffname[@] tiffcstore[@] tiffcover[@]
