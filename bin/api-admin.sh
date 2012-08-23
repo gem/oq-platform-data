@@ -1,5 +1,5 @@
 #!/bin/bash
-set -x
+#set -x
 
 if [ -f $HOME/.oq-platform-data.conf ]; then
     source $HOME/.oq-platform-data.conf
@@ -26,11 +26,12 @@ usage() {
     local ret
     ret=$1
     cat <<EOF
+
 USAGE:
     sudo $0 <prod|dev>
 
 DESCRIPTION:
-    update geodetic and XXX data with the production version
+    update geodetic and ged4gem data to production version
 
 ENVIRONMENT:
     GEM_USER - the name of the web-user that can perform rest api
@@ -117,6 +118,8 @@ if [ "$1" = "prod" ]; then
 
 elif [ "$1" = "dev" ]; then
     echo "TODO"
+elif [ "$1" = "help" ]; then
+    usage 0
 fi
 
 fname=reset.xml

@@ -14,5 +14,10 @@ help:
 	@echo "make dev  - revert to development data"
 	@echo "make help - this help"
 	@echo
+	@echo "Admin scripts usage below:"
+	@echo
+	./bin/api-admin.sh $@
+	@echo
+	./bin/geoserver-admin.sh $@
 
 .PHONY: ALL prod dev help

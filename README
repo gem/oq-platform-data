@@ -1,7 +1,18 @@
-To install production data:
+Requirements
+============
+
+You need an installed version of oq-platform (http or https version)
+You need to configure some environment variables (or add them to a config script)
+Run "make help" to take more info.
+
+
+To install production data
+==========================
 
 sudo make prod
 
-To revert to development data:
+
+To revert to development data
+=============================
 
 sudo make dev

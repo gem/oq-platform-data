@@ -28,11 +28,12 @@ usage() {
     local ret
     ret=$1
     cat <<EOF
+
 USAGE:
     sudo $0 <prod|dev>
 
 DESCRIPTION:
-    update geotiff data with the production version
+    update geotiff data to production version
 
 ENVIRONMENT:
     GEM_USER - the name of the web-user that can perform rest api
@@ -163,6 +164,8 @@ elif [ "$1" = "dev" ]; then
         tiffname[$i]="pop_vals_rural_dev.tif"
         tiffname[$((i + 1))]="pop_vals_urban_dev.tif"
     done
+elif [ "$1" = "help" ]; then
+    usage 0
 else
     usage 1
 fi
