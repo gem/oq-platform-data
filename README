@@ -1,0 +1,7 @@
+To install production data:
+
+sudo make prod
+
+To revert to development data:
+
+sudo make dev
