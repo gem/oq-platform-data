@@ -31,7 +31,7 @@ USAGE:
     sudo $0 <prod|dev>
 
 DESCRIPTION:
-    update geodetic and ged4gem data to production version
+    update geodetic data to production version
 
 ENVIRONMENT:
     GEM_USER - the name of the web-user that can perform rest api
@@ -109,12 +109,6 @@ if [ "$1" = "prod" ]; then
     export DJANGO_SCHEMATA_DOMAIN=geodetic
     python manage.py reset --noinput geodetic
     python manage.py loaddata "${gemdir}/api/data/geodetic_prod.json"
-
-    #
-    # ged4gem
-    export DJANGO_SCHEMATA_DOMAIN=ged4gem
-    python manage.py reset --noinput ged4gem
-    python manage.py loaddata "${gemdir}/api/data/ged4gem_prod.json"
 
 elif [ "$1" = "dev" ]; then
     echo "TODO"
