@@ -2,11 +2,9 @@ ALL: help
 
 prod:
 	./bin/api-admin.sh $@
-	./bin/geoserver-admin.sh $@
 
 dev:
 	./bin/api-admin.sh $@
-	./bin/geoserver-admin.sh $@
 
 help:
 	@echo
@@ -18,6 +16,5 @@ help:
 	@echo
 	./bin/api-admin.sh $@
 	@echo
-	./bin/geoserver-admin.sh $@
 
 .PHONY: ALL prod dev help
