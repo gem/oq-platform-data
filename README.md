@@ -25,3 +25,7 @@ Fixtures in the api/data folder:
 world_prod.json.bz2: the complete set of GADM countries simplified with
                      "bend simplify" algorithm (1000m tolerance)
 svir_prod.json.bz2: the complete country-level socioeconomic database
+
+To install the data on the platform you must run:
+```python manage.py loaddata world_prod.json.bz2 svir_prod.json.bz2   # development```
+```sudo openquakeplatform manage.py loaddata world_prod.json.bz2 svir_prod.json.bz2   # production```
